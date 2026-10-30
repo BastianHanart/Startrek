@@ -1,4 +1,37 @@
+<div align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/JupyterLab-F37626?style=for-the-badge&logo=jupyter&logoColor=white" alt="JupyterLab" />
+  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch" />
+  <img src="https://img.shields.io/badge/Matplotlib-37BF2E?style=for-the-badge&logo=matplotlib&logoColor=white" alt="Matplotlib" />
+  <img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white" alt="NumPy" />
+</div>
+
 # Startrek 
+
+## Utilisation du projet
+
+Pour utiliser le projet, il faut lancer un terminal à la racine du projet et lancer cette commande :
+
+```bash
+python model.py ALGO MODEL [EPISODES]
+```
+avec : 
+
+- ALGO = l'algorythme à utiliser (PPO ou DQN)
+- MODEL = Model sauvegarder dans le fichier PTH (ex : PTH/lunarlander_dqn_seed_42.pth)
+- [EPISODES] = Nombre d'épisodes à tester (Paramètre non obligatoire, si non renseigné, 1 épisode joué)
+
+Un exemple de commande serai : 
+
+```bash
+python model.py DQN PTH/lunarlander_dqn_seed_42.pth 10
+```
+
+Pour plus d'information : 
+
+```bash
+python model.py -h
+```
 
 ## Contexte
 
