@@ -112,8 +112,6 @@ def run_episode(env, model, episode_number, total_episodes):
 
                 action_probs, state_value = model(state_tensor)
 
-                dist = torch.distributions.Categorical(logits=action_probs)
-
                 # On choisit l'action la plus probable pour une évaluation déterministe
                 action = action_probs.argmax().item()
 
@@ -135,7 +133,7 @@ def main(algo, model_path, episodes):
 
     model = load_model(algo, model_path)
 
-    env = gym.make("LunarLander-v3", render_mode="human")
+    env = gym.make("LunarLander-v3", render_mode = "human")
     rewards = []
 
     try:
