@@ -29,20 +29,35 @@ class DQN(nn.Module):
 ################### 2. ARCHITECTURE DU PPO ###################
 ##############################################################
 
-class PPO(nn.Module):
-    def __init__(self, state_size=8, action_size=4):
-        super().__init__()
+class ActorCritic(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(ActorCritic, self).__init__()
 
-        self.network = nn.Sequential(
-            nn.Linear(state_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, action_size)
+
+        # ce réseau va permettre de donner une probabiltié de la prochaine action a réaliser selon l'env du vaisseau
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, 64), # prend nos 8 valeurs d'entrées et les envoie dans une couche de 64 neuronnes
+            nn.Tanh(), # convertit nos donneés entre -1 et 1 pour une meilleur exploitation 
+            nn.Linear(64, 64), # on refournit nos données déjà entrainé sur nos 64 neuronnes dnas 64 nouveaux neurones une couche de plus
+            nn.Tanh(),
+            nn.Linear(64, action_dim) # output des 4 actions
         )
+        
+        # sort une seule valeur estimation de l'action
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, 1) 
+        )
+        
 
+    #  cet fonction permet de choisir le chemin que la donnée va suivre dans notre réseau de neuronne
     def forward(self, state):
-        return self.network(state)
+        action_probs = self.actor(state)
+        state_value = self.critic(state)
+        return action_probs, state_value
 
 ##############################################################
 ################### 3. CHARGEMENT DU MODEL ###################
@@ -50,16 +65,18 @@ class PPO(nn.Module):
 
 def load_model(ALGO, MODEL):
 
+    env = gym.make("LunarLander-v3")
+
     if ALGO.lower() == "dqn":
         model = DQN()
 
     elif ALGO.lower() == "ppo":
-        model = PPO()
+        model = ActorCritic(env.observation_space.shape[0], env.action_space.n)
 
     else:
         raise ValueError(f"Algorithme {ALGO} inconnu, essayé 'DQN' ou 'PPO'")
 
-    state_dict = torch.load(MODEL)
+    state_dict = torch.load(MODEL, weights_only=False)
 
     model.load_state_dict(state_dict)
     model.eval()
@@ -86,21 +103,26 @@ def run_episode(env, model, episode_number, total_episodes):
         state_tensor = torch.as_tensor(state, dtype=torch.float32)
 
         with torch.no_grad():
-            q_values = model(state_tensor)
-            action = q_values.argmax().item()
+            if algo.lower() == "dqn":
+
+                q_values = model(state_tensor)
+                action = q_values.argmax().item()
+
+            elif algo.lower() == "ppo":
+
+                action_probs, state_value = model(state_tensor)
+
+                dist = torch.distributions.Categorical(logits=action_probs)
+
+                # On choisit l'action la plus probable pour une évaluation déterministe
+                action = action_probs.argmax().item()
 
         state, reward, terminated, truncated, info = env.step(action)
 
         total_reward += reward
         steps += 1
 
-    print(
-        f"Episode {episode_number}/{total_episodes} "
-        f"| Score : {total_reward:.2f} "
-        f"| Pas : {steps} "
-        f"| Termine : {terminated} "
-        f"| Interrompu : {truncated}"
-    )
+    print(f"Episode {episode_number}/{total_episodes} "f"| Score : {total_reward:.2f} " f"| Pas : {steps} " f"| Termine : {terminated} " f"| Interrompu : {truncated}")
 
     return total_reward
 
